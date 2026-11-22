@@ -42,19 +42,21 @@ function lbl(s){return ST.filter(function(x){return x[0]===s})[0][1]}
 function fmt(s){var m=Math.floor(s/60),r=s%60;return m+":"+(r<10?"0":"")+r}
 function stop(){if(tm){clearInterval(tm);tm=null}}
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+function tt(g){return g.nick||g.name}
+function hit(g,q){var h=((g.nick||"")+" "+g.name+" "+g.brand+" "+g.id).toLowerCase();return q.toLowerCase().split(/\s+/).filter(Boolean).every(function(w){return h.indexOf(w)>-1})}
 function route(){stop();var id=location.hash.slice(1),g=G.filter(function(x){return x.id===id})[0];cur=g?g.id:null;window.scrollTo(0,0);cur?card():home()}
 function home(){
- var l=G.filter(function(g){return (g.name+" "+g.brand).toLowerCase().indexOf(q.toLowerCase())>-1});
+ var l=G.filter(function(g){return hit(g,q)});
  var need=G.filter(function(g){return st(g.id)!=="ok"});
  var h='<h1>Наші крупи</h1><input id="q" aria-label="Пошук крупи" placeholder="Знайти крупу…" value="'+esc(q)+'">';
- l.forEach(function(g){h+='<button class="item" data-open="'+esc(g.id)+'"><span><b>'+esc(g.name)+'</b><small>'+esc(g.brand)+' · '+esc(g.pack)+'</small></span><span class="badge">'+(st(g.id)==="ok"?g.min+" хв":lbl(st(g.id)))+'</span></button>'});
+ l.forEach(function(g){h+='<button class="item" data-open="'+esc(g.id)+'"><span><b>'+esc(tt(g))+'</b><small>'+(g.nick?esc(g.name)+' · ':'')+esc(g.brand)+' · '+esc(g.pack)+'</small></span><span class="badge">'+(st(g.id)==="ok"?g.min+" хв":lbl(st(g.id)))+'</span></button>'});
  if(!l.length)h+='<p>Нічого не знайдено.</p>';
- if(need.length){h+='<div class="cart"><h2>Купити</h2><ul style="margin:8px 0 0;padding-left:20px">';need.forEach(function(g){h+='<li style="display:list-item">'+esc(g.name)+' — '+lbl(st(g.id)).toLowerCase()+'</li>'});h+='</ul></div>'}
+ if(need.length){h+='<div class="cart"><h2>Купити</h2><ul style="margin:8px 0 0;padding-left:20px">';need.forEach(function(g){h+='<li style="display:list-item">'+esc(tt(g))+' — '+lbl(st(g.id)).toLowerCase()+'</li>'});h+='</ul></div>'}
  app.innerHTML=h;var i=document.getElementById("q");i.oninput=function(){q=i.value;var p=i.selectionStart;home();var n=document.getElementById("q");n.focus();n.setSelectionRange(p,p)};
  [].forEach.call(document.querySelectorAll("[data-open]"),function(b){b.onclick=function(){location.hash=b.getAttribute("data-open")}});
 }
 function card(){
- var g=G.filter(function(x){return x.id===cur})[0],h='<button class="back" id="bk">← Усі крупи</button><div><h1>'+esc(g.name)+'</h1><div style="margin-top:6px;font-size:14px;color:var(--mute)">'+esc(g.brand)+' · '+esc(g.pack)+'</div></div><div class="stats">';
+ var g=G.filter(function(x){return x.id===cur})[0],h='<button class="back" id="bk">← Усі крупи</button><div><h1>'+esc(tt(g))+'</h1><div style="margin-top:6px;font-size:14px;color:var(--mute)">'+(g.nick?esc(g.name)+' · ':'')+esc(g.brand)+' · '+esc(g.pack)+'</div></div><div class="stats">';
  g.stats.forEach(function(s){h+='<div class="stat"><b>'+esc(s.v)+'</b><span>'+esc(s.l)+'</span></div>'});
  h+='</div><ol>';g.steps.forEach(function(s,i){h+='<li><i>'+(i+1)+'</i><span>'+esc(s)+'</span></li>'});
  h+='</ol><div class="chips">';g.chips.forEach(function(c){h+='<span class="chip">'+esc(c)+'</span>'});
