@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B6B4B">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Наші крупи</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#fff;--fg:#14201A;--mute:#4A5A52;--acc:#0B6B4B;--on-acc:#fff;--tint:#E8F3EE;--line:#DCE5E0;--warn:#8A4B00}
+@media (prefers-color-scheme:dark){:root{--bg:#0F1713;--fg:#E8F0EB;--mute:#A3B5AB;--acc:#5FD3A0;--on-acc:#06281A;--tint:#183226;--line:#25382E;--warn:#F2B866}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:Manrope,system-ui,sans-serif;line-height:1.4;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+main{max-width:520px;margin:0 auto;padding:20px;display:flex;flex-direction:column;gap:18px}
+h1{margin:0;font-size:30px;line-height:1.1;font-weight:800}h2{margin:0;font-size:16px}
+button,input{font:inherit;color:inherit}
+.back{align-self:flex-start;background:none;border:0;color:var(--acc);font-weight:600;font-size:15px;min-height:44px;padding:0;cursor:pointer}
+input{width:100%;box-sizing:border-box;height:48px;border:1.5px solid var(--line);border-radius:14px;background:var(--bg);padding:0 14px;font-size:16px}
+.item{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;min-height:64px;box-sizing:border-box;padding:12px 16px;background:var(--tint);border:0;border-radius:16px;text-align:left;cursor:pointer}
+.item b{font-size:17px}.item small{display:block;color:var(--mute);font-size:13px}
+.badge{font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:20px;padding:4px 10px;white-space:nowrap;background:var(--bg)}
+.stats{display:flex;gap:12px}.stat{flex:1;background:var(--tint);border-radius:16px;padding:16px}
+.stat b{display:block;font-size:40px;font-weight:800;line-height:1;color:var(--acc)}.stat span{font-size:14px}
+ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+li{display:flex;gap:12px;font-size:16px}li i{flex:none;width:28px;height:28px;border-radius:14px;background:var(--acc);color:var(--on-acc);text-align:center;line-height:28px;font-size:14px;font-style:normal;font-weight:800}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-size:13px}
+.seg{display:flex;gap:8px}.seg button{flex:1;min-height:44px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);cursor:pointer;font-size:14px;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--acc);color:var(--on-acc);border-color:var(--acc)}
+.timer{height:56px;border:0;border-radius:16px;background:var(--acc);color:var(--on-acc);font-size:18px;font-weight:800;cursor:pointer}
+.note{font-size:14px;color:var(--warn);margin:0}.cart{border-top:1px solid var(--line);padding-top:14px;font-size:15px}
+</style>
+</head>
+<body>
+<main id="app">Завантаження…</main>
+<script>
+var G=[],ST=[["ok","Є"],["low","Закінчується"],["out","Немає"]],stock={},cur=null,q="",left=0,tm=null,app=document.getElementById("app");
+try{stock=JSON.parse(localStorage.getItem("krupy-stock")||"{}")}catch(e){}
+function save(){try{localStorage.setItem("krupy-stock",JSON.stringify(stock))}catch(e){}}
+function st(id){return stock[id]||"ok"}
+function lbl(s){return ST.filter(function(x){return x[0]===s})[0][1]}
+function fmt(s){var m=Math.floor(s/60),r=s%60;return m+":"+(r<10?"0":"")+r}
+function stop(){if(tm){clearInterval(tm);tm=null}}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+function route(){stop();var id=location.hash.slice(1),g=G.filter(function(x){return x.id===id})[0];cur=g?g.id:null;window.scrollTo(0,0);cur?card():home()}
+function home(){
+ var l=G.filter(function(g){return (g.name+" "+g.brand).toLowerCase().indexOf(q.toLowerCase())>-1});
+ var need=G.filter(function(g){return st(g.id)!=="ok"});
+ var h='<h1>Наші крупи</h1><input id="q" aria-label="Пошук крупи" placeholder="Знайти крупу…" value="'+esc(q)+'">';
+ l.forEach(function(g){h+='<button class="item" data-open="'+esc(g.id)+'"><span><b>'+esc(g.name)+'</b><small>'+esc(g.brand)+' · '+esc(g.pack)+'</small></span><span class="badge">'+(st(g.id)==="ok"?g.min+" хв":lbl(st(g.id)))+'</span></button>'});
+ if(!l.length)h+='<p>Нічого не знайдено.</p>';
+ if(need.length){h+='<div class="cart"><h2>Купити</h2><ul style="margin:8px 0 0;padding-left:20px">';need.forEach(function(g){h+='<li style="display:list-item">'+esc(g.name)+' — '+lbl(st(g.id)).toLowerCase()+'</li>'});h+='</ul></div>'}
+ app.innerHTML=h;var i=document.getElementById("q");i.oninput=function(){q=i.value;var p=i.selectionStart;home();var n=document.getElementById("q");n.focus();n.setSelectionRange(p,p)};
+ [].forEach.call(document.querySelectorAll("[data-open]"),function(b){b.onclick=function(){location.hash=b.getAttribute("data-open")}});
+}
+function card(){
+ var g=G.filter(function(x){return x.id===cur})[0],h='<button class="back" id="bk">← Усі крупи</button><div><h1>'+esc(g.name)+'</h1><div style="margin-top:6px;font-size:14px;color:var(--mute)">'+esc(g.brand)+' · '+esc(g.pack)+'</div></div><div class="stats">';
+ g.stats.forEach(function(s){h+='<div class="stat"><b>'+esc(s.v)+'</b><span>'+esc(s.l)+'</span></div>'});
+ h+='</div><ol>';g.steps.forEach(function(s,i){h+='<li><i>'+(i+1)+'</i><span>'+esc(s)+'</span></li>'});
+ h+='</ol><div class="chips">';g.chips.forEach(function(c){h+='<span class="chip">'+esc(c)+'</span>'});
+ h+='</div>'+(g.note?'<p class="note">'+esc(g.note)+'</p>':'')+'<div><h2 style="margin-bottom:8px">Запас</h2><div class="seg">';
+ ST.forEach(function(s){h+='<button data-st="'+s[0]+'" aria-pressed="'+(st(g.id)===s[0])+'">'+s[1]+'</button>'});
+ h+='</div></div><button class="timer" id="tm">'+(tm?"Зупинити "+fmt(left):"Таймер "+fmt(g.min*60))+'</button>';
+ app.innerHTML=h;
+ document.getElementById("bk").onclick=function(){location.hash=""};
+ [].forEach.call(document.querySelectorAll("[data-st]"),function(b){b.onclick=function(){stock[g.id]=b.getAttribute("data-st");save();card()}});
+ document.getElementById("tm").onclick=function(){
+  if(tm){stop();left=0;card();return}
+  left=g.min*60;tm=setInterval(function(){left--;var b=document.getElementById("tm");
+   if(left<=0){stop();if(b)b.textContent="Готово!";try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}}
+   else if(b)b.textContent="Зупинити "+fmt(left)},1000);card()};
+}
+window.onhashchange=route;
+fetch("krupy.json",{cache:"no-cache"}).then(function(r){return r.json()}).then(function(d){G=d;route()}).catch(function(){app.textContent="Не вдалося завантажити krupy.json"});
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){});
+</script>
+</body>
+</html>
