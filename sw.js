@@ -1,10 +1,55 @@
-var C="krupy-v11",A=["./","index.html","krupy.json","manifest.webmanifest","icon-192.png","icon-512.png"],F=["fonts.googleapis.com","fonts.gstatic.com"];
-self.addEventListener("install",function(e){e.waitUntil(caches.open(C).then(function(c){return c.addAll(A)}));self.skipWaiting()});
-self.addEventListener("activate",function(e){e.waitUntil(caches.keys().then(function(k){return Promise.all(k.filter(function(n){return n!==C}).map(function(n){return caches.delete(n)}))}))});
-self.addEventListener("fetch",function(e){
- if(e.request.method!=="GET")return;
- var u=new URL(e.request.url);
- if(F.indexOf(u.hostname)>-1){e.respondWith(caches.match(e.request).then(function(m){return m||fetch(e.request).then(function(r){var c=r.clone();caches.open(C).then(function(x){x.put(e.request,c)});return r})}));return}
- if(u.origin!==location.origin)return;
- e.respondWith(fetch(e.request).then(function(r){var c=r.clone();caches.open(C).then(function(x){x.put(e.request,c)});return r}).catch(function(){return caches.match(e.request)}));
+const CACHE = "krupy-v12";
+const ASSETS = [
+  "./",
+  "index.html",
+  "css/styles.css",
+  "js/app.js",
+  "data/krupy.json",
+  "manifest.webmanifest",
+  "assets/icon-192.png",
+  "assets/icon-512.png",
+];
+const FONT_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com"];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)));
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))
+    )
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") return;
+  const url = new URL(event.request.url);
+
+  if (FONT_HOSTS.includes(url.hostname)) {
+    event.respondWith(
+      caches.match(event.request).then((cached) =>
+        cached || fetch(event.request).then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+      )
+    );
+    return;
+  }
+
+  if (url.origin !== location.origin) return;
+
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        const copy = response.clone();
+        caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
+  );
 });
