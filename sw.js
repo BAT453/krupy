@@ -1,4 +1,4 @@
-const CACHE = "krupy-v12";
+const CACHE = "krupy-v13";
 const ASSETS = [
   "./",
   "index.html",
