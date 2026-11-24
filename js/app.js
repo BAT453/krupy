@@ -1,7 +1,10 @@
-var G=[],Z={items:{},exported:null,changes:0},tab="grain",view="name",q="",ft="",fx=0,cur=null,tm=null,T={},fo=false,tmOpen=null,AC=null,fm={},app=document.getElementById("app");
+var G=[],Z={items:{},exported:null,changes:0},tab="grain",view="name",q="",ft="",fx=0,cur=null,tm=null,T={},fo=false,tmOpen=null,AC=null,bo=false,CK={},fm={},app=document.getElementById("app");
 var LV=["Порожня","¼","½","¾","Повна"],PL=["Шафа","Полиця","Ящик · мала коробка","Ящик · велика коробка"],SL={low:"Закінчується",out:"Немає"},KD={jar:"банка",sealed:"закрита пачка",open:"відкрита пачка"};
 try{var s0=JSON.parse(localStorage.getItem("krupy-zapas")||"null");if(s0&&s0.items)Z=s0}catch(e){}
+try{CK=JSON.parse(localStorage.getItem("krupy-checks")||"{}")||{}}catch(e){CK={}}
 function save(){try{localStorage.setItem("krupy-zapas",JSON.stringify(Z))}catch(e){}}
+function ckSave(){try{localStorage.setItem("krupy-checks",JSON.stringify(CK))}catch(e){}}
+function isOn(gid,k){return!!(CK[gid]&&CK[gid][k])}
 function chg(){Z.changes=(Z.changes||0)+1;save()}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function us(id){return Z.items[id]||[]}
@@ -35,7 +38,19 @@ function status(g){var a=us(g.id);if(!a.length)return"none";
 function seg(items,c,act){return'<div class="seg">'+items.map(function(i){return'<button data-act="'+act+'" data-v="'+i[0]+'" aria-pressed="'+(i[0]===c)+'">'+i[1]+'</button>'}).join("")+'</div>'}
 function row(g,line){var s=status(g),b=ty(g)==="grain"?g.min+" хв":g.pack;
  return'<button class="item" data-act="open" data-v="'+esc(g.id)+'"><span><b>'+esc(tt(g))+'</b><small>'+(g.nick?esc(g.name)+' · ':'')+esc(g.brand)+' · '+esc(g.pack)+'</small>'+(line?'<small class="st">'+esc(line)+'</small>':'')+'</span><span class="bd"><span class="badge">'+esc(b)+'</span>'+((s==="low"||s==="out")?'<span class="badge w">'+SL[s]+'</span>':'')+'</span></button>'}
-function rec(r){var h='<div><h2 style="margin-bottom:8px">Рецепт з пачки: '+esc(r.title)+'</h2><div class="chips" style="margin-bottom:12px">';r.ingredients.forEach(function(x){h+='<span class="chip">'+esc(x)+'</span>'});h+='</div><ol>';r.steps.forEach(function(s,i){h+='<li><i>'+(i+1)+'</i><span>'+esc(s)+'</span></li>'});return h+'</ol></div>'}
+function parts(s){var m=s.match(/^([^:,(]{2,24}):\s*(.+)$/);if(!m)return{g:"",a:[s]};var a=[],d=0,c="",t=m[2];
+ for(var i=0;i<t.length;i++){var ch=t.charAt(i);if(ch==="(")d++;if(ch===")")d--;if(ch===","&&d===0){a.push(c.trim());c=""}else c+=ch}
+ if(c.trim())a.push(c.trim());return{g:m[1],a:a}}
+function pin(gid,k,t){var o=isOn(gid,k);return'<button class="pin'+(o?' done':'')+'" data-act="ck" data-k="'+k+'" role="checkbox" aria-checked="'+o+'"><i aria-hidden="true"></i><span>'+esc(t)+'</span></button>'}
+function stepLi(gid,k,i,s){var o=isOn(gid,k);return'<li class="stp'+(o?' done':'')+'" data-act="ck" data-k="'+k+'" role="checkbox" tabindex="0" aria-checked="'+o+'"><i>'+(i+1)+'</i><span>'+esc(s)+'</span></li>'}
+function rec(r,gid){var n=0,op=false,h='<section class="rcp"><div class="rh"><span class="eyebrow">Рецепт з пачки</span><h2 class="rt">'+esc(r.title)+'</h2><div class="prog" id="rp"></div></div><h3>Інгредієнти</h3>';
+ r.ingredients.forEach(function(x){var p=parts(x);if(p.g){if(op)h+='</div>';h+='<div class="grp">'+esc(p.g)+'</div><div class="pins">';op=true}else if(!op){h+='<div class="pins">';op=true}
+  p.a.forEach(function(t){h+=pin(gid,"i"+n++,t)})});
+ if(op)h+='</div>';
+ h+='<h3>Приготування</h3><ol class="rs">';r.steps.forEach(function(s,i){h+=stepLi(gid,"r"+i,i,s)});return h+'</ol></section>'}
+function updProg(){if(!cur)return;var r=document.getElementById("rp"),s=document.getElementById("sp"),q=function(x){return document.querySelectorAll(x)},rs=' <button class="lk" data-act="ckr">Скинути відмітки</button>';
+ if(r){var d1=q(".rcp .pin.done").length,d2=q(".rcp .stp.done").length;r.innerHTML='Інгредієнти '+d1+'/'+q(".rcp .pin").length+' · кроки '+d2+'/'+q(".rcp .stp").length+((d1+d2)?rs:"")}
+ if(s){var d=q(".ms .stp.done").length;s.innerHTML=d?'Виконано '+d+' з '+q(".ms .stp").length+rs:""}}
 function route(){var id=location.hash.slice(1),g=G.filter(function(x){return x.id===id})[0];cur=g?g.id:null;if(!g||g.id!==tmOpen)tmOpen=null;fm={};window.scrollTo(0,0);if(g)tab=ty(g);document.body.className=tab==="spice"?"sp":"";cur?card():home()}
 function days(){return Z.exported?Math.floor((Date.now()-Date.parse(Z.exported))/864e5):null}
 function home(){
@@ -49,8 +64,10 @@ function home(){
  if(!l.length)h+='<p>Нічого не знайдено.</p>'+(nf?'<button class="btn" data-act="fr">Скинути фільтри</button>':'');
  if(need.length){h+='<div class="cart"><h2>Купити</h2><ul style="margin:8px 0 0;padding-left:20px">';need.forEach(function(g){h+='<li style="display:list-item">'+esc(tt(g))+' — '+SL[status(g)].toLowerCase()+'</li>'});h+='</ul></div>'}
  var d=days();
- h+='<div class="bk"><h2>Резервна копія</h2><span>Облік живе в цьому браузері. '+(d===null?'Експорту ще не було.':'Останній експорт: '+d+' дн. тому.')+' Змін відтоді: '+(Z.changes||0)+'.</span><button class="btn p" data-act="export">Експортувати zapas.json</button><label class="btn" style="display:flex;align-items:center;justify-content:center;box-sizing:border-box">Імпортувати zapas.json<input id="im" type="file" accept=".json,application/json" hidden></label></div>';
+ var warn=(Z.changes||0)>0&&(d===null||d>7);
+ h+='<details class="bk"'+(bo?' open':'')+'><summary><span>Резервна копія</span><small>'+(d===null?'ще не робилась':'збережено '+d+' дн. тому')+((Z.changes||0)?' · змін: '+Z.changes:'')+'</small>'+(warn?'<b class="dot" role="img" aria-label="Є незбережені зміни"></b>':'')+'</summary><p>Облік запасів і нотатки живуть лише в цьому браузері. Збережіть файл, щоб їх не втратити.</p><div class="bkb"><button class="gh" data-act="export">⬇ Зберегти файл</button><label class="gh">⬆ Відновити з файлу<input id="im" type="file" accept=".json,application/json" hidden></label></div></details>';
  app.className="";app.innerHTML=h;
+ var bd=document.querySelector(".bk");bd.ontoggle=function(){bo=bd.open};
  var i=document.getElementById("q");i.oninput=function(){q=i.value;var p=i.selectionStart;home();var n=document.getElementById("q");n.focus();n.setSelectionRange(p,p)};
  document.getElementById("im").onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var o=JSON.parse(r.result);if(!o||typeof o.items!=="object")throw 0;if(confirm("Замінити поточний облік даними з файлу?")){Z=o;save();home()}}catch(x){alert("Не вдалося прочитати файл")}};r.readAsText(f)};
 }
@@ -76,13 +93,13 @@ function card(){
  g.stats.forEach(function(s,i){if(i===ti){var ts=T[g.id],run=ts&&!ts.done,dn=ts&&ts.done;h+='<button class="stat tb2" data-act="timer" aria-label="'+(run?"Відкрити таймер":"Запустити таймер")+': '+esc(s.v)+' '+esc(s.l)+'"><span><b id="tmb">'+(run?fmt(left(g.id)):dn?"Готово!":esc(s.v))+'</b><span>'+esc(s.l)+'</span></span><i class="pl" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="'+(run?"M7 5h4v14H7zM13 5h4v14h-4z":dn?"M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z":"M8 5v14l11-7z")+'"/></svg></i></button>'}
   else h+='<div class="stat"><b>'+esc(s.v)+'</b><span>'+esc(s.l)+'</span></div>'});
  h+='</div>';
- if(g.steps&&g.steps.length){h+='<ol>';g.steps.forEach(function(s,i){h+='<li><i>'+(i+1)+'</i><span>'+esc(s)+'</span></li>'});h+='</ol>'}
+ if(g.steps&&g.steps.length){h+='<div class="prog" id="sp"></div><ol class="ms">';g.steps.forEach(function(s,i){h+=stepLi(g.id,"s"+i,i,s)});h+='</ol>'}
  if(g.uses&&g.uses.length){h+='<div><h2 style="margin-bottom:8px">Куди додавати</h2><div class="chips">';g.uses.forEach(function(c){h+='<span class="chip">'+esc(c)+'</span>'});h+='</div></div>'}
  h+='<div class="chips">';g.chips.forEach(function(c){h+='<span class="chip">'+esc(c)+'</span>'});
  h+='</div>'+(g.note?'<p class="note">'+esc(g.note)+'</p>':'');
  if(g.photo)h+='<a href="'+esc(g.photo)+'" target="_blank" rel="noopener"><img src="'+esc(g.photo)+'" alt="Упаковка: '+esc(tt(g))+'" loading="lazy" style="width:100%;border-radius:16px;display:block"></a>';
- h+='<div><h2 style="margin-bottom:8px">Нотатки родини <span id="ns" style="font-weight:400;color:var(--mute);font-size:14px"></span></h2><textarea id="nt" rows="3" aria-label="Нотатки родини" placeholder="Наприклад: розсипчаста 1:2, 15 хв">'+esc((Z.notes||{})[g.id]||"")+'</textarea></div>'+(g.recipe?rec(g.recipe):'');
- app.className="c";app.innerHTML=h+sheet(g)+pop(g);bindSheet();
+ h+='<div><h2 style="margin-bottom:8px">Нотатки родини <span id="ns" style="font-weight:400;color:var(--mute);font-size:14px"></span></h2><textarea id="nt" rows="3" aria-label="Нотатки родини" placeholder="Наприклад: розсипчаста 1:2, 15 хв">'+esc((Z.notes||{})[g.id]||"")+'</textarea></div>'+(g.recipe?rec(g.recipe,g.id):'');
+ app.className="c";app.innerHTML=h+sheet(g)+pop(g);bindSheet();updProg();
  var nt=document.getElementById("nt");if(nt){var nto=null,sv=function(){Z.notes=Z.notes||{};if(nt.value.trim())Z.notes[g.id]=nt.value;else delete Z.notes[g.id];chg();var s=document.getElementById("ns");if(s)s.textContent="· Збережено"};
   nt.oninput=function(){clearTimeout(nto);var s=document.getElementById("ns");if(s)s.textContent="";nto=setTimeout(sv,400)};
   nt.onblur=function(){clearTimeout(nto);if(nt.value!==((Z.notes||{})[g.id]||""))sv()}}
@@ -109,6 +126,8 @@ app.addEventListener("click",function(e){
   tmOpen=cur;card()}
  else if(a==="tstop"){stop(cur);tmOpen=null;card()}
  else if(a==="tclose"){tmOpen=null;card()}
+ else if(a==="ck"){CK[cur]=CK[cur]||{};var ck=b.getAttribute("data-k");if(CK[cur][ck])delete CK[cur][ck];else CK[cur][ck]=1;if(!Object.keys(CK[cur]).length)delete CK[cur];ckSave();var on=isOn(cur,ck);b.classList.toggle("done",on);b.setAttribute("aria-checked",on);updProg()}
+ else if(a==="ckr"){delete CK[cur];ckSave();card()}
  else if(a==="tab"){tab=v;document.body.className=tab==="spice"?"sp":"";home()}
  else if(a==="view"){view=v;home()}
  else if(a==="fo"){fo=!fo;home()}
@@ -130,6 +149,7 @@ app.addEventListener("click",function(e){
   fm.pour=false;fm.open=true;chg();card()}
 });
 app.addEventListener("change",function(e){var t=e.target;if(t.getAttribute&&t.getAttribute("data-act")==="grams"){var u=unit(t.getAttribute("data-u"));if(u){u.grams=t.value===""?null:Math.max(0,parseInt(t.value,10)||0);chg()}}});
+app.addEventListener("keydown",function(e){var t=e.target;if((e.key===" "||e.key==="Enter")&&t.getAttribute&&t.getAttribute("role")==="checkbox"&&t.tagName==="LI"){e.preventDefault();t.click()}});
 window.onhashchange=route;
 fetch("data/krupy.json",{cache:"no-cache"}).then(function(r){return r.json()}).then(function(d){G=d;route()}).catch(function(){app.textContent="Не вдалося завантажити data/krupy.json"});
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){});

@@ -410,13 +410,231 @@ button.stat {
 }
 
 .bk {
-    background: var(--tint);
+    border: 1.5px dashed var(--line);
     border-radius: 14px;
-    padding: 14px 16px;
+    padding: 0 14px;
+    font-size: 14px;
+    color: var(--mute)
+}
+
+.bk[open] {
+    padding-bottom: 14px
+}
+
+.bk summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    cursor: pointer;
+    list-style: none
+}
+
+.bk summary::-webkit-details-marker {
+    display: none
+}
+
+.bk summary::after {
+    content: "▾";
+    transition: transform .2s
+}
+
+.bk[open] summary::after {
+    transform: rotate(180deg)
+}
+
+.bk summary span {
+    font-weight: 700;
+    color: var(--fg)
+}
+
+.bk summary small {
+    flex: 1;
+    text-align: right;
+    font-size: 13px
+}
+
+.bk .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--warn)
+}
+
+.bk p {
+    margin: 0 0 10px
+}
+
+.bkb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px
+}
+
+.gh {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1.5px solid var(--line);
+    border-radius: 999px;
+    background: none;
+    color: var(--fg);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer
+}
+
+.gh:hover {
+    background: var(--tint)
+}
+
+.rcp {
+    background: var(--tint);
+    border-radius: 20px;
+    padding: 18px 16px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px
+}
+
+.eyebrow {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--acc)
+}
+
+.rt {
+    font-size: 22px;
+    line-height: 1.2;
+    margin: 2px 0 6px
+}
+
+.rcp h3 {
+    margin: 6px 0 0;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--mute)
+}
+
+.grp {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--fg);
+    margin-top: 2px
+}
+
+.pins {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px
+}
+
+.pin {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 6px 14px 6px 8px;
+    border: 1.5px solid var(--line);
+    border-radius: 999px;
+    background: var(--bg);
+    font-size: 15px;
+    text-align: left;
+    cursor: pointer
+}
+
+.pin i,
+.stp i {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 2px solid var(--acc);
+    background: transparent;
+    color: var(--on-acc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 800;
+    line-height: 1
+}
+
+.stp {
+    align-items: flex-start;
+    padding: 12px;
+    border-radius: 14px;
+    background: var(--tint);
+    cursor: pointer;
+    min-height: 44px;
+    box-sizing: border-box
+}
+
+.stp i {
+    width: 28px;
+    height: 28px;
+    background: var(--acc);
+    border-color: var(--acc);
     font-size: 14px
+}
+
+.rcp .stp {
+    background: var(--bg)
+}
+
+.ms,
+.rs {
+    gap: 8px
+}
+
+.done {
+    opacity: .6
+}
+
+.done > span {
+    text-decoration: line-through;
+    text-decoration-thickness: 2px
+}
+
+.pin.done i,
+.stp.done i {
+    background: var(--acc);
+    border-color: var(--acc);
+    font-size: 0
+}
+
+.pin.done i::after,
+.stp.done i::after {
+    content: "✓";
+    font-size: 14px
+}
+
+.prog {
+    font-size: 14px;
+    color: var(--mute)
+}
+
+.prog:empty {
+    display: none
+}
+
+.lk {
+    background: none;
+    border: 0;
+    padding: 6px 0 6px 6px;
+    min-height: 32px;
+    color: var(--acc);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: underline
 }
 
 .unit {
